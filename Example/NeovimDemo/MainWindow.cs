@@ -34,7 +34,48 @@ namespace NeovimDemo
 
         public MainWindow()
         {
+
             InitializeComponent();
+
+            this.SuspendLayout();
+            // 
+            // glControl
+            // 
+            this.glControl = new OpenTK.GLControl();
+            this.glControl.BackColor = System.Drawing.Color.Black;
+            this.glControl.Font = new System.Drawing.Font("Consolas", 15F, 
+                System.Drawing.FontStyle.Regular, 
+                System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.glControl.Location = new System.Drawing.Point(0, 0);
+            this.glControl.Margin = new System.Windows.Forms.Padding(7, 7, 7, 7);
+            this.glControl.Name = "glControl";
+            this.glControl.Size = new System.Drawing.Size(this.mainPanel.Size.Width-50, 480);
+            this.glControl.TabIndex = 0;
+            this.glControl.VSync = false;
+            this.glControl.Load += new System.EventHandler(this.glControl_Load);
+            this.glControl.Paint += new System.Windows.Forms.PaintEventHandler(this.glControl_Paint);
+            this.glControl.KeyDown += new System.Windows.Forms.KeyEventHandler(this.glControl_KeyDown);
+
+
+            this.mainPanel.Controls.Add(this.glControl);
+
+            // 
+            // MainWindow
+            // 
+            //this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            //this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            //this.AutoSize = true;
+            //this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            //this.ClientSize = new System.Drawing.Size(882, 483);
+            //this.Margin = new System.Windows.Forms.Padding(4, 40, 4, 4);
+            //this.ClientSize = new System.Drawing.Size(284, 261);
+            this.Name = "MainWindow";
+            this.Text = "Neovim";
+
+            this.ResumeLayout(false);
+
+
+
 
             _uiContext = SynchronizationContext.Current;
             _neovim = new NeovimClient(@"C:\Program Files\Neovim\bin\nvim.exe");
@@ -317,6 +358,12 @@ namespace NeovimDemo
                 _neovim.vim_input(keys);
 
             e.Handled = true;
+        }
+
+
+        private void LoadScriptToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
         }
     }
 }

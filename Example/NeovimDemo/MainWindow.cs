@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -43,13 +44,13 @@ namespace NeovimDemo
             // 
             this.glControl = new OpenTK.GLControl();
             this.glControl.BackColor = System.Drawing.Color.Black;
-            this.glControl.Font = new System.Drawing.Font("Consolas", 15F, 
-                System.Drawing.FontStyle.Regular, 
+            this.glControl.Font = new System.Drawing.Font("Consolas", 15F,
+                System.Drawing.FontStyle.Regular,
                 System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.glControl.Location = new System.Drawing.Point(0, 0);
             this.glControl.Margin = new System.Windows.Forms.Padding(7, 7, 7, 7);
             this.glControl.Name = "glControl";
-            this.glControl.Size = new System.Drawing.Size(this.mainPanel.Size.Width-50, 480);
+            this.glControl.Size = new System.Drawing.Size(this.mainPanel.Size.Width - 50, 480);
             this.glControl.TabIndex = 0;
             this.glControl.VSync = false;
             this.glControl.Load += new System.EventHandler(this.glControl_Load);
@@ -95,7 +96,7 @@ namespace NeovimDemo
         private void NeovimOnRedraw(object sender, NeovimRedrawEventArgs e)
         {
             bool shouldInvalidate = false;
-     
+
             _backBuffer.Bind();
             foreach (var method in e.Methods)
             {
@@ -158,7 +159,7 @@ namespace NeovimDemo
 
                         var text = Encoding.Default.GetString(bytes.ToArray());
                         var tSize = _font.Measure(text);
-                        
+
                         DrawRectangle(new RectangleF(_cursor.Location, tSize), _bgColor);
 
                         GL.Enable(EnableCap.Blend);
@@ -167,7 +168,7 @@ namespace NeovimDemo
                         GL.Color4(Color.White);
 
                         _cursor.X += tSize.Width;
-                        if (_cursor.X >= _columns*_width) // Dont know if this is needed
+                        if (_cursor.X >= _columns * _width) // Dont know if this is needed
                         {
                             _cursor.X = 0;
                             _cursor.Y += _height;
@@ -335,18 +336,19 @@ namespace NeovimDemo
         {
             GL.Begin(PrimitiveType.Quads);
 
-            var wScale = 1.0f/glControl.Width;
-            var hScale = 1.0f/glControl.Height;
+            var wScale = 1.0f / glControl.Width;
+            var hScale = 1.0f / glControl.Height;
 
             var flippedRectSrc = new RectangleF(rectSrc.X, glControl.Height - rectSrc.Bottom, rectSrc.Width, rectSrc.Height);
 
-            GL.TexCoord2(wScale * flippedRectSrc.X,                          hScale * (flippedRectSrc.Y + flippedRectSrc.Height)); GL.Vertex2(rectDst.X, rectDst.Y);
+            GL.TexCoord2(wScale * flippedRectSrc.X, hScale * (flippedRectSrc.Y + flippedRectSrc.Height)); GL.Vertex2(rectDst.X, rectDst.Y);
             GL.TexCoord2(wScale * (flippedRectSrc.X + flippedRectSrc.Width), hScale * (flippedRectSrc.Y + flippedRectSrc.Height)); GL.Vertex2(rectDst.X + rectDst.Width, rectDst.Y);
-            GL.TexCoord2(wScale * (flippedRectSrc.X + flippedRectSrc.Width), hScale * flippedRectSrc.Y);                           GL.Vertex2(rectDst.X + rectDst.Width, rectDst.Y + rectDst.Height);
-            GL.TexCoord2(wScale * flippedRectSrc.X,                          hScale * (flippedRectSrc.Y));                         GL.Vertex2(rectDst.X, rectDst.Y + rectDst.Height);
+            GL.TexCoord2(wScale * (flippedRectSrc.X + flippedRectSrc.Width), hScale * flippedRectSrc.Y); GL.Vertex2(rectDst.X + rectDst.Width, rectDst.Y + rectDst.Height);
+            GL.TexCoord2(wScale * flippedRectSrc.X, hScale * (flippedRectSrc.Y)); GL.Vertex2(rectDst.X, rectDst.Y + rectDst.Height);
 
             GL.End();
         }
+
 
         private void glControl_KeyDown(object sender, KeyEventArgs e)
         {
@@ -361,9 +363,53 @@ namespace NeovimDemo
         }
 
 
+        private void HandleKeyInput(char input)
+        {
+            var key = (Keys)input;
+            string keys = Input.Encode((int)key);
+            if (keys != null)
+                _neovim.vim_input(keys);
+        }
+
+
         private void LoadScriptToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            Stream myStream = null;
+            var openFileDialog = new OpenFileDialog();
+
+            openFileDialog.InitialDirectory = "c:\\";
+            openFileDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+            openFileDialog.FilterIndex = 2;
+            openFileDialog.RestoreDirectory = true;
+
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    if ((myStream = openFileDialog.OpenFile()) != null)
+                    {
+                        using (var streamReader = new StreamReader(myStream))
+                        {
+                            while (!streamReader.EndOfStream)
+                            {
+                                var line = streamReader.ReadLine();
+                                var inputs = line.ToCharArray();
+                                foreach (var input in inputs)
+                                {
+                                    this.HandleKeyInput(input);
+                                }
+
+                                Thread.Sleep(2000);
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
+                }
+            }
+
         }
     }
 }

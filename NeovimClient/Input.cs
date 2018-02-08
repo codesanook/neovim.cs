@@ -11,7 +11,7 @@ namespace Neovim
     public static class Input
     {
         private static readonly Dictionary<Key, string> InvisibleKeys = new Dictionary<Key, string>()
-        { 
+        {
             { Key.Escape, "<Esc>" }, { Key.F1, "<F1>" }, { Key.F2, "<F2>" }, { Key.F3, "<F3>" }, { Key.F4, "<F4>" }, { Key.F5, "<F5>" }, { Key.F6, "<F6>" },
             { Key.F7, "<F7>" }, { Key.F8, "<F8>" }, { Key.F9, "<F9>" }, { Key.F10, "<F10>" }, { Key.F11, "<F11>" }, { Key.F12, "<F12>" }, { Key.Back, "<BS>"},
             { Key.Tab, "<Tab>" }, { Key.Enter, "<Enter>" }, { Key.Up, "<Up>" }, { Key.Space, "<Space>" }, { Key.Left, "<Left>" },
@@ -19,9 +19,9 @@ namespace Neovim
         };
 
 
-    [DllImport("user32.dll")]
+        [DllImport("user32.dll")]
         public static extern int ToUnicode(uint wVirtKey, uint wScanCode, byte[] lpKeyState,
-            [Out, MarshalAs(UnmanagedType.LPWStr, SizeParamIndex = 4)] StringBuilder pwszBuff, int cchbuf, uint wFlags);
+                [Out, MarshalAs(UnmanagedType.LPWStr, SizeParamIndex = 4)] StringBuilder pwszBuff, int cchbuf, uint wFlags);
 
         [DllImport("user32.dll")]
         private static extern uint MapVirtualKey(uint uCode, MapType uMapType);
@@ -77,7 +77,7 @@ namespace Neovim
 
         public static string Encode(Key key)
         {
-          return KeyToUnicode(key);
+            return KeyToUnicode(key);
         }
 
         public static string Encode(int key)

@@ -11,6 +11,8 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using QuickFont;
+using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace NeovimDemo
 {
@@ -363,17 +365,68 @@ namespace NeovimDemo
         }
 
 
-        private void HandleKeyInput(char input)
+        private async Task HandleKeyInput(Stream myStream)
         {
-            var key = (Keys)input;
-            string keys = Input.Encode((int)key);
-            if (keys != null)
-                _neovim.vim_input(keys);
+            var task = Task.Run(() =>
+            {
+                using (myStream)
+                using (var streamReader = new StreamReader(myStream))
+                {
+                    while (!streamReader.EndOfStream)
+                    {
+                        Thread.Sleep(2000);
+                        var line = streamReader.ReadLine();
+                        var inputs = line.ToCharArray();
+
+                        string vimComand = "";
+                        foreach (var input in inputs)
+                        {
+                            if (input == '\\')
+                            {
+                                vimComand += input.ToString();
+                                continue;
+                            }
+                            else
+                            {
+                                vimComand += input.ToString();
+                            }
+
+                            string pattern = @"\\(?<specialCharacter>\w)";
+                            var match = Regex.Match(vimComand, pattern);
+                            if (match.Success)
+                            {
+                                var suffix =   match.Groups["specialCharacter"].Value;
+                                vimComand = GetSpecialCharacter(suffix);
+                            }
+
+                            _neovim.vim_input(vimComand);
+                            vimComand = "";
+                        }
+                    }
+                }
+            });
+
+            await task;
+        }
+
+        private string GetSpecialCharacter(string suffix)
+        {
+            switch (suffix)
+            {
+                case "r":
+                    return "\r";
+                default:
+                    throw new InvalidOperationException(
+                        $@"not support special character for \{suffix}");
+
+            }
+
         }
 
 
-        private void LoadScriptToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void LoadScriptToolStripMenuItem_Click(object sender, EventArgs e)
         {
+
             Stream myStream = null;
             var openFileDialog = new OpenFileDialog();
 
@@ -384,32 +437,9 @@ namespace NeovimDemo
 
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
-                try
-                {
-                    if ((myStream = openFileDialog.OpenFile()) != null)
-                    {
-                        using (var streamReader = new StreamReader(myStream))
-                        {
-                            while (!streamReader.EndOfStream)
-                            {
-                                var line = streamReader.ReadLine();
-                                var inputs = line.ToCharArray();
-                                foreach (var input in inputs)
-                                {
-                                    this.HandleKeyInput(input);
-                                }
-
-                                Thread.Sleep(2000);
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
-                }
+                myStream = openFileDialog.OpenFile();
+                await HandleKeyInput(myStream);
             }
-
         }
     }
 }

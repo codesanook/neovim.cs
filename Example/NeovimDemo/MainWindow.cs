@@ -11,6 +11,7 @@ using OpenTK.Graphics.OpenGL;
 using QuickFont;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using log4net;
 
 namespace NeovimDemo
 {
@@ -33,9 +34,11 @@ namespace NeovimDemo
         private FrameBuffer _pingPongBuffer;
         private char[] charBuffer;
 
+        private static readonly ILog log = LogManager.GetLogger(nameof(MainWindow));
+
         public MainWindow()
         {
-
+            log.Debug("main windows");
             InitializeComponent();
 
             this.SuspendLayout();

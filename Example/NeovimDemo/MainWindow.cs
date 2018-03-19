@@ -356,19 +356,19 @@ namespace NeovimDemo
             GL.End();
         }
 
-
         private void glControl_KeyDown(object sender, KeyEventArgs e)
         {
+            log.Debug($"keyCode in keydown {(int)e.KeyCode}");
             if (e.KeyCode == Keys.ShiftKey || e.KeyCode == Keys.Alt || e.KeyCode == Keys.ControlKey)
                 return;
 
             string keys = Input.Encode((int)e.KeyCode);
+            log.Debug($"keys after encode {keys}");
             if (keys != null)
                 _neovim.vim_input(keys);
 
             e.Handled = true;
         }
-
 
         private async Task HandleKeyInput(Stream myStream)
         {

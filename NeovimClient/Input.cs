@@ -1,4 +1,5 @@
-﻿using System;
+﻿using log4net;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Eventing.Reader;
 using System.Runtime.InteropServices;
@@ -10,12 +11,32 @@ namespace Neovim
 {
     public static class Input
     {
+
+        private static readonly ILog log = LogManager.GetLogger(nameof(Input));
+
         private static readonly Dictionary<Key, string> InvisibleKeys = new Dictionary<Key, string>()
         {
-            { Key.Escape, "<Esc>" }, { Key.F1, "<F1>" }, { Key.F2, "<F2>" }, { Key.F3, "<F3>" }, { Key.F4, "<F4>" }, { Key.F5, "<F5>" }, { Key.F6, "<F6>" },
-            { Key.F7, "<F7>" }, { Key.F8, "<F8>" }, { Key.F9, "<F9>" }, { Key.F10, "<F10>" }, { Key.F11, "<F11>" }, { Key.F12, "<F12>" }, { Key.Back, "<BS>"},
-            { Key.Tab, "<Tab>" }, { Key.Enter, "<Enter>" }, { Key.Up, "<Up>" }, { Key.Space, "<Space>" }, { Key.Left, "<Left>" },
-            { Key.Down, "<Down>" }, { Key.Right, "<Right>" }
+            { Key.Escape, "<Esc>" },
+            { Key.F1, "<F1>" },
+            { Key.F2, "<F2>" },
+            { Key.F3, "<F3>" },
+            { Key.F4, "<F4>" },
+            { Key.F5, "<F5>" },
+            { Key.F6, "<F6>" },
+            { Key.F7, "<F7>" },
+            { Key.F8, "<F8>" },
+            { Key.F9, "<F9>" },
+            { Key.F10, "<F10>" },
+            { Key.F11, "<F11>" },
+            { Key.F12, "<F12>" },
+            { Key.Back, "<BS>"},
+            { Key.Tab, "<Tab>" },
+            { Key.Enter, "<Enter>" },
+            { Key.Up, "<Up>" },
+            { Key.Space, "<Space>" },
+            { Key.Left, "<Left>" },
+            { Key.Down, "<Down>" },
+            { Key.Right, "<Right>" }
         };
 
 
@@ -82,6 +103,7 @@ namespace Neovim
 
         public static string Encode(int key)
         {
+            log.Debug($"encode key value {key}");
             return KeyToUnicode(KeyInterop.KeyFromVirtualKey(key));
         }
     }

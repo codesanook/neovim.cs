@@ -12,6 +12,7 @@ using QuickFont;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using log4net;
+using System.Linq;
 
 namespace NeovimDemo
 {
@@ -33,7 +34,7 @@ namespace NeovimDemo
         private FrameBuffer _backBuffer;
         private FrameBuffer _pingPongBuffer;
         private char[] charBuffer;
-//https://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx
+        //https://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx
         private IDictionary<string, int> commandCode = new Dictionary<string, int>
         {
             { "c", 0x11}
@@ -375,54 +376,6 @@ namespace NeovimDemo
             e.Handled = true;
         }
 
-        //private async Task HandleKeyInput(Stream inputStream)
-        //{
-        //    var task = Task.Run(() =>
-        //    {
-        //        using (inputStream)
-        //        using (var streamReader = new StreamReader(inputStream))
-        //        {
-        //            while (!streamReader.EndOfStream)
-        //            {
-        //                Thread.Sleep(2000);
-        //                var line = streamReader.ReadLine();
-        //                var inputs = line.ToCharArray();
-
-        //                string vimComand = "";
-        //                foreach (var input in inputs)
-        //                {
-        //                    if (input == '\\')
-        //                    {
-        //                        vimComand += input.ToString();
-        //                        continue;
-        //                    }
-        //                    else
-        //                    {
-        //                        vimComand += input.ToString();
-        //                    }
-
-        //                    //for control key
-        //                    //<c-(?<key>\w)>
-        //                    //
-
-        //                    string pattern = @"\\(?<specialCharacter>\w)";
-        //                    var match = Regex.Match(vimComand, pattern);
-        //                    if (match.Success)
-        //                    {
-        //                        var suffix =   match.Groups["specialCharacter"].Value;
-        //                        vimComand = GetSpecialCharacter(suffix);
-        //                    }
-
-        //                    _neovim.vim_input(vimComand);
-        //                    vimComand = "";
-        //                }
-        //            }
-        //        }
-        //    });
-
-        //    await task;
-        //}
-
 
         private async Task HandleKeyInput(Stream inputStream)
         {
@@ -435,62 +388,121 @@ namespace NeovimDemo
                     {
                         Thread.Sleep(2000);
                         var line = streamReader.ReadLine();
-
-                        //for control key
-                        //<c-(?<key>\w)>
-                        //
-
-
-                        const string pattern = @"<(?<command>\w)-(?<key>\w)>";
-                        var match = Regex.Match(line, pattern);
-                        if (match.Success)
+                        var keys = line.ToArray();
+                        var commandText = new StringBuilder();
+                        var appendKey = false;
+                        foreach (var key in keys)
                         {
-                            var command = match.Groups["command"].Value;
-                            var key = match.Groups["key"].Value;
+    
+                            if (key == '<')
+                            {
+                                appendKey = true;
+                            }
+
+                            if(key == '>')
+                            {
+                                commandText.Append(key);
+                                ProcessCommandKey(commandText.ToString());
+                                commandText = new StringBuilder();
+                                appendKey = false;
+                                continue;
+                            }
+
+                            if (appendKey)
+                            {
+                                commandText.Append(key);
+                                continue;
+                            }
+
+                            var keyboardState = new byte[256];
+                            if (char.IsUpper(key))
+                            {
+                                const int shiftCode = 0XA0;
+                                keyboardState[shiftCode] = 0x81;
+                                const int dataLinkEscapeCode = 0x10;
+                                keyboardState[dataLinkEscapeCode] = 0x81;
+                            }
+
+                            var keyCode = (int)char.ToUpper(key);
+                            var unicodeInput = Input.Encode(keyCode, keyboardState);
+                            _neovim.vim_input(unicodeInput);
                         }
-
-
-                        _neovim.vim_input(vimComand);
-                        vimComand = "";
                     }
                 }
-            }
             });
 
             await task;
-    }
+        }
 
-    private string GetSpecialCharacter(string suffix)
-    {
-        switch (suffix)
+        private void ProcessCommandKey(string line)
         {
-            case "r":
-                return "\r";
-            default:
-                throw new InvalidOperationException(
-                    $@"not support special character for \{suffix}");
+
+            var keyLookup = new Dictionary<string, int>()
+                        {
+                            { "c", 0x11 },//left control
+                            { "cr" , 0xD}//cariage return
+                        };
+
+            //?: not capture group
+            var commandRegex = new Regex(@"<(?<command>\w+)(?:-(?<combinedKey>\w))?>", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var match = commandRegex.Match(line);
+            if (match.Success)
+            {
+                var command = match.Groups["command"].Value;
+                var commandCode = keyLookup[command];
+
+                if (match.Groups.Count == 2)
+                {
+                    var combinedKey = match.Groups["combinedKey"].Value.ToCharArray()[0];
+                    var combinedKeyCode = (int)char.ToUpper(combinedKey);
+
+                    var keyboardState = new byte[256];
+                    keyboardState[commandCode] = 0x81;
+
+                    var unicodeInput = Input.Encode(combinedKeyCode, keyboardState);
+                    _neovim.vim_input(unicodeInput);
+                }
+                else
+                {
+                    var keyboardState = new byte[256];
+                    var unicodeInput = Input.Encode(commandCode, keyboardState);
+                    _neovim.vim_input(unicodeInput);
+                }
+
+            }
+        }
+
+        private string GetSpecialCharacter(string suffix)
+        {
+            switch (suffix)
+            {
+                case "r":
+                    return "\r";
+                default:
+                    throw new InvalidOperationException(
+                        $@"not support special character for \{suffix}");
+
+            }
 
         }
 
-    }
 
-
-    private async void LoadScriptToolStripMenuItem_Click(object sender, EventArgs e)
-    {
-
-        Stream myStream = null;
-        var openFileDialog = new OpenFileDialog();
-
-        openFileDialog.InitialDirectory = "c:\\";
-        openFileDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
-        openFileDialog.FilterIndex = 2;
-        openFileDialog.RestoreDirectory = true;
-
-        if (openFileDialog.ShowDialog() == DialogResult.OK)
+        private async void LoadScriptToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            myStream = openFileDialog.OpenFile();
-            await HandleKeyInput(myStream);
+
+            Stream myStream = null;
+            var openFileDialog = new OpenFileDialog();
+
+            openFileDialog.InitialDirectory = "c:\\";
+            openFileDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+            openFileDialog.FilterIndex = 2;
+            openFileDialog.RestoreDirectory = true;
+
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                myStream = openFileDialog.OpenFile();
+                await HandleKeyInput(myStream);
+            }
         }
     }
-}
 }

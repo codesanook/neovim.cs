@@ -48,8 +48,13 @@ namespace Neovim
         [DllImport("user32.dll")]
         private static extern uint MapVirtualKey(uint uCode, MapType uMapType);
 
+
         [DllImport("user32.dll")]
         private static extern bool GetKeyboardState(byte[] lpKeyState);
+
+        [DllImport("user32.dll")]
+        private static extern short VkKeyScan(char ch);
+
 
         private enum MapType : uint
         {
@@ -85,10 +90,11 @@ namespace Neovim
 
             switch (result)
             {
-                case -1:
-                case 0:
+                case -1://fail
+                case 0://no translation
                     break;
                 default:
+                    //success
                     ch = stringBuilder[0];
                     break;
             }
@@ -123,33 +129,16 @@ namespace Neovim
         }
 
 
-        public static string Encode(byte[] keyboardState)
+        public static string Encode(int virtualKey, byte[] keyboardState)
         {
-
-            keyboardState[0x11] = 0x81;//press and toggle = 129
-
-
-            char ch = '\0';
-            //https://www.fileformat.info/info/unicode/char/000f/index.htm
-
-            //Converts a WPF Key into a Win32 Virtual-Key.
-            int virtualKey = KeyInterop.VirtualKeyFromKey(key);
-
-            //uCode is a virtual-key code and is translated into a scan code.
-            //If it is a virtual-key code that does not distinguish between left- and right-hand keys,
-            //the left-hand scan code is returned.
-            //If there is no translation, the function returns 0.
-            //https://msdn.microsoft.com/en-us/library/windows/desktop/ms646306(v=vs.85).aspx
+            //win 32 and win form has the same key
+            //convert virtual key to scan code
             uint scanCode = MapVirtualKey((uint)virtualKey, MapType.MAPVK_VK_TO_VSC);
-
-            //https://msdn.microsoft.com/en-us/library/windows/desktop/ms646299(v=vs.85).aspx
-            GetKeyboardState(keyboardState);
-
-
             var stringBuilder = new StringBuilder(2);
             //https://msdn.microsoft.com/en-us/library/windows/desktop/ms646320(v=vs.85).aspx
             int result = ToUnicode((uint)virtualKey, scanCode, keyboardState, stringBuilder, stringBuilder.Capacity, 0);
 
+            char ch = '\0';
             switch (result)
             {
                 case -1:
@@ -160,11 +149,11 @@ namespace Neovim
                     break;
             }
 
-            string keys = "";
+            var keys = "";
             // Not a writable key
             if (ch == '\0')
             {
-                if (InvisibleKeys.TryGetValue(key, out keys))
+                if (InvisibleKeys.TryGetValue((Key)virtualKey, out keys))
                     return keys;
 
                 return null;
@@ -173,10 +162,6 @@ namespace Neovim
             //https://en.wikipedia.org/wiki/C0_and_C1_control_codes
             //https://en.wikipedia.org/wiki/Shift_Out_and_Shift_In_characters
             return ch.ToString();
-
         }
-
-
-
     }
 }

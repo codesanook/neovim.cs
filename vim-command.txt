@@ -1,2 +1,6 @@
-/world\r
-n
+/t<cr>
+H
+M
+L
+<c-o>
+<c-i>

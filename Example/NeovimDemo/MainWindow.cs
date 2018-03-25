@@ -393,13 +393,13 @@ namespace NeovimDemo
                         var appendKey = false;
                         foreach (var key in keys)
                         {
-    
+
                             if (key == '<')
                             {
                                 appendKey = true;
                             }
 
-                            if(key == '>')
+                            if (key == '>')
                             {
                                 commandText.Append(key);
                                 ProcessCommandKey(commandText.ToString());
@@ -423,8 +423,8 @@ namespace NeovimDemo
                                 keyboardState[dataLinkEscapeCode] = 0x81;
                             }
 
-                            var keyCode = (int)char.ToUpper(key);
-                            var unicodeInput = Input.Encode(keyCode, keyboardState);
+                            var virtualCode = Input.GetVirtualCodeFromCharacter(key);
+                            var unicodeInput = Input.Encode(virtualCode, keyboardState);
                             _neovim.vim_input(unicodeInput);
                         }
                     }
@@ -450,10 +450,11 @@ namespace NeovimDemo
             {
                 var command = match.Groups["command"].Value;
                 var commandCode = keyLookup[command];
+                var combindedKeyValue = match.Groups["combinedKey"].Value;
 
-                if (match.Groups.Count == 2)
+                if (!string.IsNullOrEmpty(combindedKeyValue))
                 {
-                    var combinedKey = match.Groups["combinedKey"].Value.ToCharArray()[0];
+                    var combinedKey = combindedKeyValue.ToCharArray()[0];
                     var combinedKeyCode = (int)char.ToUpper(combinedKey);
 
                     var keyboardState = new byte[256];

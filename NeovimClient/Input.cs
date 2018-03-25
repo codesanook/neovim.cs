@@ -55,6 +55,18 @@ namespace Neovim
         [DllImport("user32.dll")]
         private static extern short VkKeyScan(char ch);
 
+        public static int GetVirtualCodeFromCharacter(char character)
+        {
+            var vkKeyScan = VkKeyScan(character);
+            var vkCode = vkKeyScan & 0xff;
+            //https://stackoverflow.com/a/33541171/1872200
+            //var vkCode = vkKeyScan & 0xff;
+            //var shift = (vkKeyScan & 0x100) > 0;
+            //var ctrl = (vkKeyScan & 0x200) > 0;
+            //var alt = (vkKeyScan & 0x400) > 0;
+            return vkCode;
+        }
+
 
         private enum MapType : uint
         {
@@ -122,21 +134,21 @@ namespace Neovim
         public static string Encode(int key)
         {
             log.Debug($"encode key value {key}");
-            var unicodeKey =  KeyToUnicode(KeyInterop.KeyFromVirtualKey(key));
+            var unicodeKey = KeyToUnicode(KeyInterop.KeyFromVirtualKey(key));
 
             log.Debug($"unicode key value {unicodeKey}");
             return unicodeKey;
         }
 
 
-        public static string Encode(int virtualKey, byte[] keyboardState)
+        public static string Encode(int virtualCode, byte[] keyboardState)
         {
             //win 32 and win form has the same key
             //convert virtual key to scan code
-            uint scanCode = MapVirtualKey((uint)virtualKey, MapType.MAPVK_VK_TO_VSC);
+            uint scanCode = MapVirtualKey((uint)virtualCode, MapType.MAPVK_VK_TO_VSC);
             var stringBuilder = new StringBuilder(2);
             //https://msdn.microsoft.com/en-us/library/windows/desktop/ms646320(v=vs.85).aspx
-            int result = ToUnicode((uint)virtualKey, scanCode, keyboardState, stringBuilder, stringBuilder.Capacity, 0);
+            int result = ToUnicode((uint)virtualCode, scanCode, keyboardState, stringBuilder, stringBuilder.Capacity, 0);
 
             char ch = '\0';
             switch (result)
@@ -153,7 +165,7 @@ namespace Neovim
             // Not a writable key
             if (ch == '\0')
             {
-                if (InvisibleKeys.TryGetValue((Key)virtualKey, out keys))
+                if (InvisibleKeys.TryGetValue((Key)virtualCode, out keys))
                     return keys;
 
                 return null;

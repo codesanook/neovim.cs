@@ -1,6 +1,1 @@
-/t<cr>
-H
-M
-L
-<c-o>
-<c-i>
+/hi<cr>

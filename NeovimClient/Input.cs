@@ -55,9 +55,17 @@ namespace Neovim
         [DllImport("user32.dll")]
         private static extern short VkKeyScan(char ch);
 
+        /// <summary>
+        /// / (slash) in ASCII is 47 code but it is not the same as keyboard virtual code which is (VK_OEM_2 0xBF)
+        /// virtual key code table https://msdn.microsoft.com/en-us/library/windows/desktop/dd375731
+        /// </summary>
+        /// <param name="character"></param>
+        /// <returns></returns>
         public static int GetVirtualCodeFromCharacter(char character)
         {
+            //char to scan code
             var vkKeyScan = VkKeyScan(character);
+            //scan code to virtual code
             var vkCode = vkKeyScan & 0xff;
             //https://stackoverflow.com/a/33541171/1872200
             //var vkCode = vkKeyScan & 0xff;
@@ -66,7 +74,6 @@ namespace Neovim
             //var alt = (vkKeyScan & 0x400) > 0;
             return vkCode;
         }
-
 
         private enum MapType : uint
         {

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.2015
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{30F24225-82A8-467B-8AC7-0474A170BD14}"
 	ProjectSection(SolutionItems) = preProject
@@ -17,6 +17,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeovimDemo", "Example\NeovimDemo\NeovimDemo.csproj", "{CEA1673A-098B-4893-9E17-89F687685A37}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickFont", "Example\QuickFont\QuickFont.csproj", "{BBECE6FC-EF63-40F8-A734-A500D1DFC1AF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{021B5D3E-205F-433B-A4F6-FA95F90AFAA7}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -43,5 +48,8 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{CEA1673A-098B-4893-9E17-89F687685A37} = {554CFFE1-BA6B-4056-8D37-A8EB8B1CC733}
 		{BBECE6FC-EF63-40F8-A734-A500D1DFC1AF} = {554CFFE1-BA6B-4056-8D37-A8EB8B1CC733}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9253C63E-5D03-4FA1-AC17-A6033FDA14D6}
 	EndGlobalSection
 EndGlobal

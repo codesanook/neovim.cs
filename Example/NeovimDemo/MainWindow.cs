@@ -33,7 +33,15 @@ namespace NeovimDemo
 
         private FrameBuffer _backBuffer;
         private FrameBuffer _pingPongBuffer;
-        private char[] charBuffer;
+        private static readonly HashSet<char> shiftedSymbol = new HashSet<char>(new[]
+        {
+            '(',
+            ')',
+            '%',
+            '{',
+            '}'
+        });
+
         //https://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx
         private IDictionary<string, int> commandCode = new Dictionary<string, int>
         {
@@ -415,10 +423,11 @@ namespace NeovimDemo
                             }
 
                             var keyboardState = new byte[256];
-                            if (char.IsUpper(key))
+                            if (IsCombinedWithShift(key))
                             {
                                 const int shiftCode = 0XA0;
                                 keyboardState[shiftCode] = 0x81;
+
                                 const int dataLinkEscapeCode = 0x10;
                                 keyboardState[dataLinkEscapeCode] = 0x81;
                             }
@@ -432,6 +441,17 @@ namespace NeovimDemo
             });
 
             await task;
+        }
+
+        private static bool IsCombinedWithShift(char key)
+        {
+            if (char.IsUpper(key))
+            {
+                return true;
+            }
+
+            return shiftedSymbol.Contains(key);
+
         }
 
         private void ProcessCommandKey(string line)
@@ -472,21 +492,6 @@ namespace NeovimDemo
 
             }
         }
-
-        private string GetSpecialCharacter(string suffix)
-        {
-            switch (suffix)
-            {
-                case "r":
-                    return "\r";
-                default:
-                    throw new InvalidOperationException(
-                        $@"not support special character for \{suffix}");
-
-            }
-
-        }
-
 
         private async void LoadScriptToolStripMenuItem_Click(object sender, EventArgs e)
         {

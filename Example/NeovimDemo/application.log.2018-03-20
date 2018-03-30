@@ -1,9 +1,0 @@
-DEBUG 1 MainWindow - main windows
-DEBUG 1 MainWindow - keyCode in keydown 17
-DEBUG 1 MainWindow - keyCode in keydown 79
-DEBUG 1 Input - encode key value 79
-DEBUG 1 MainWindow - main windows
-DEBUG 1 MainWindow - keyCode in keydown 79
-DEBUG 1 Input - encode key value 79
-DEBUG 1 Input - unicode key value 
-DEBUG 1 MainWindow - keys after encode 

@@ -156,4 +156,4 @@ $RECYCLE.BIN/
 .vs
 
 #ignore VIM log file
-application.log
+logs

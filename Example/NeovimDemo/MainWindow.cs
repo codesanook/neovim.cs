@@ -92,11 +92,11 @@ namespace NeovimDemo
 
             this.ResumeLayout(false);
 
-
-
-
             _uiContext = SynchronizationContext.Current;
-            _neovim = new NeovimClient(@"C:\Program Files\Neovim\bin\nvim.exe");
+
+//where vimrc ~\AppData\Local\nvim\init.vim
+            var neoVimPath = @"..\..\..\..\Neovim\bin\nvim.exe";
+            _neovim = new NeovimClient(neoVimPath);
             // Event is asynchronous so we need to handle the redraw event in the UI thread
             _neovim.Redraw += (o, args) => _uiContext.Post(x => NeovimOnRedraw(o, args), null);
             _neovim.ui_attach(_columns, _rows, true);

@@ -91,11 +91,11 @@ namespace NeovimDemo
             this.Text = "Neovim";
 
             this.ResumeLayout(false);
-
             _uiContext = SynchronizationContext.Current;
 
-//where vimrc ~\AppData\Local\nvim\init.vim
-            var neoVimPath = @"..\..\..\..\Neovim\bin\nvim.exe";
+            //where to put vimrc ~\AppData\Local\nvim\init.vim
+            //install neovim from Chocolatey
+            var neoVimPath = "C:\tools\neovim\Neovim\bin\nvim.exe";
             _neovim = new NeovimClient(neoVimPath);
             // Event is asynchronous so we need to handle the redraw event in the UI thread
             _neovim.Redraw += (o, args) => _uiContext.Post(x => NeovimOnRedraw(o, args), null);

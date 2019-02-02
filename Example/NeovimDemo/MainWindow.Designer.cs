@@ -42,7 +42,7 @@ namespace NeovimDemo
             this.loadScriptToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(892, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(884, 24);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -58,15 +58,18 @@ namespace NeovimDemo
             this.mainPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.mainPanel.Location = new System.Drawing.Point(0, 24);
             this.mainPanel.Name = "mainPanel";
-            this.mainPanel.Size = new System.Drawing.Size(892, 615);
+            this.mainPanel.Size = new System.Drawing.Size(884, 487);
             this.mainPanel.TabIndex = 1;
             // 
             // MainWindow
             // 
-            this.ClientSize = new System.Drawing.Size(892, 639);
+            this.AutoSize = true;
+            this.ClientSize = new System.Drawing.Size(884, 511);
             this.Controls.Add(this.mainPanel);
             this.Controls.Add(this.menuStrip1);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MainMenuStrip = this.menuStrip1;
+            this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();

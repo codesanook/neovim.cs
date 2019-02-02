@@ -8,7 +8,6 @@ using System.Windows.Forms;
 using Neovim;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
-using QuickFont;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using log4net;
@@ -59,34 +58,22 @@ namespace NeovimDemo
             // 
             // glControl
             // 
-            this.glControl = new OpenTK.GLControl();
-            this.glControl.BackColor = System.Drawing.Color.Black;
-            this.glControl.Font = new System.Drawing.Font("Consolas", 15F,
-                System.Drawing.FontStyle.Regular,
-                System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.glControl.Location = new System.Drawing.Point(0, 0);
-            this.glControl.Margin = new System.Windows.Forms.Padding(7, 7, 7, 7);
+            this.glControl = new GLControl();
+            this.glControl.Dock = DockStyle.Fill;
+            this.glControl.BackColor = Color.Black;
+            this.glControl.Font = new Font("Consolas", 15F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
+            this.glControl.Location = new Point(0, 0);
+            this.glControl.Margin = new Padding(10);
             this.glControl.Name = "glControl";
-            this.glControl.Size = new System.Drawing.Size(this.mainPanel.Size.Width - 50, 480);
+            //this.glControl.Size = new Size(this.mainPanel.Size.Width,  this.mainPanel.Size.Height);
             this.glControl.TabIndex = 0;
             this.glControl.VSync = false;
-            this.glControl.Load += new System.EventHandler(this.glControl_Load);
-            this.glControl.Paint += new System.Windows.Forms.PaintEventHandler(this.glControl_Paint);
-            this.glControl.KeyDown += new System.Windows.Forms.KeyEventHandler(this.glControl_KeyDown);
-
+            this.glControl.Load += new EventHandler(this.glControl_Load);
+            this.glControl.Paint += new PaintEventHandler(this.glControl_Paint);
+            this.glControl.KeyDown += new KeyEventHandler(this.glControl_KeyDown);
 
             this.mainPanel.Controls.Add(this.glControl);
-
-            // 
-            // MainWindow
-            // 
-            //this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
-            //this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            //this.AutoSize = true;
-            //this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            //this.ClientSize = new System.Drawing.Size(882, 483);
-            //this.Margin = new System.Windows.Forms.Padding(4, 40, 4, 4);
-            //this.ClientSize = new System.Drawing.Size(284, 261);
+            this.mainPanel.BackColor = Color.Black;
             this.Name = "MainWindow";
             this.Text = "Neovim";
 
@@ -95,7 +82,7 @@ namespace NeovimDemo
 
             //where to put vimrc ~\AppData\Local\nvim\init.vim
             //install neovim from Chocolatey
-            var neoVimPath = "C:\tools\neovim\Neovim\bin\nvim.exe";
+            var neoVimPath = @"C:\tools\neovim\Neovim\bin\nvim.exe";
             _neovim = new NeovimClient(neoVimPath);
             // Event is asynchronous so we need to handle the redraw event in the UI thread
             _neovim.Redraw += (o, args) => _uiContext.Post(x => NeovimOnRedraw(o, args), null);
@@ -189,7 +176,7 @@ namespace NeovimDemo
                         GL.Color4(Color.White);
 
                         _cursor.X += tSize.Width;
-                        if (_cursor.X >= _columns * _width) // Dont know if this is needed
+                        if (_cursor.X >= _columns * _width) // Don't know if this is needed
                         {
                             _cursor.X = 0;
                             _cursor.Y += _height;
@@ -264,18 +251,6 @@ namespace NeovimDemo
                         else if (mode == "normal")
                             _cursor.Width = _width;
                         break;
-
-                        //        case RedrawMethodType.BusyStart:
-                        //            break;
-
-                        //        case RedrawMethodType.BusyStop:
-                        //            break;
-
-                        //        case RedrawMethodType.MouseOn:
-                        //            break;
-
-                        //        case RedrawMethodType.MouseOff:
-                        //            break;
                 }
             }
             FrameBuffer.Unbind();
@@ -495,10 +470,8 @@ namespace NeovimDemo
 
         private async void LoadScriptToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
             Stream myStream = null;
             var openFileDialog = new OpenFileDialog();
-
             openFileDialog.InitialDirectory = "c:\\";
             openFileDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
             openFileDialog.FilterIndex = 2;

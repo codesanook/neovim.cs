@@ -55,17 +55,21 @@ namespace NeovimDemo
             InitializeComponent();
 
             this.SuspendLayout();
-            // 
             // glControl
-            // 
             this.glControl = new GLControl();
-            this.glControl.Dock = DockStyle.Fill;
-            this.glControl.BackColor = Color.Black;
-            this.glControl.Font = new Font("Consolas", 15F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
+
+            //this.glControl.BackColor = Color.White;
+            this.glControl.Font = new Font(
+                "Consolas",
+                15F,
+                FontStyle.Regular,
+                GraphicsUnit.Point,
+                ((byte)(0))
+            );
+
             this.glControl.Location = new Point(0, 0);
             this.glControl.Margin = new Padding(10);
             this.glControl.Name = "glControl";
-            //this.glControl.Size = new Size(this.mainPanel.Size.Width,  this.mainPanel.Size.Height);
             this.glControl.TabIndex = 0;
             this.glControl.VSync = false;
             this.glControl.Load += new EventHandler(this.glControl_Load);
@@ -73,10 +77,8 @@ namespace NeovimDemo
             this.glControl.KeyDown += new KeyEventHandler(this.glControl_KeyDown);
 
             this.mainPanel.Controls.Add(this.glControl);
-            this.mainPanel.BackColor = Color.Black;
             this.Name = "MainWindow";
             this.Text = "Neovim";
-
             this.ResumeLayout(false);
             _uiContext = SynchronizationContext.Current;
 

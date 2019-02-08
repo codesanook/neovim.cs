@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Drawing;
-using System.Drawing.Text;
 using System.Drawing.Imaging;
 using OpenTK.Graphics.OpenGL;
-using OpenTK;
 
 
 namespace QuickFont
@@ -20,7 +15,6 @@ namespace QuickFont
         public int Width { get { return width; } }
         public int Height { get { return height; } }
 
-
         public TexturePage(string filePath)
         {
             var bitmap = new QBitmap(filePath);
@@ -33,10 +27,8 @@ namespace QuickFont
             CreateTexture(dataSource);
         }
 
-
         private void CreateTexture(BitmapData dataSource)
         {
-
             width = dataSource.Width;
             height = dataSource.Height;
 
@@ -55,7 +47,6 @@ namespace QuickFont
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0,
                 OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, dataSource.Scan0);
         }
-
 
 
         #region IDisposable

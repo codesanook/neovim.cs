@@ -22,11 +22,12 @@ namespace NeovimDemo
 
         private RectangleF _cursor;
         private RectangleF _scrollRegion;
+        private int _columns = 55;
         private int _rows = 24;
-        private int _columns = 80;
         private float _width;
         private float _height;
         private FontGroup _font;
+
         private Color _fgColor = Color.White;
         private Color _bgColor = Color.DarkSlateGray;
 
@@ -53,12 +54,10 @@ namespace NeovimDemo
         {
             log.Debug("main windows");
             InitializeComponent();
-
             this.SuspendLayout();
+
             // glControl
             this.glControl = new GLControl();
-
-            //this.glControl.BackColor = Color.White;
             this.glControl.Font = new Font(
                 "Consolas",
                 15F,
@@ -67,11 +66,14 @@ namespace NeovimDemo
                 ((byte)(0))
             );
 
+
             this.glControl.Location = new Point(0, 0);
             this.glControl.Margin = new Padding(10);
             this.glControl.Name = "glControl";
             this.glControl.TabIndex = 0;
             this.glControl.VSync = false;
+            this.glControl.Dock = DockStyle.Fill;
+
             this.glControl.Load += new EventHandler(this.glControl_Load);
             this.glControl.Paint += new PaintEventHandler(this.glControl_Paint);
             this.glControl.KeyDown += new KeyEventHandler(this.glControl_KeyDown);
@@ -89,6 +91,16 @@ namespace NeovimDemo
             // Event is asynchronous so we need to handle the redraw event in the UI thread
             _neovim.Redraw += (o, args) => _uiContext.Post(x => NeovimOnRedraw(o, args), null);
             _neovim.ui_attach(_columns, _rows, true);
+        }
+
+        private void InitialDimension()
+        {
+            _font = new FontGroup(glControl.Font);
+            _font.Color = _fgColor;
+            _width = _font.MonoSpaceWidth;
+            _height = _font.LineSpacing;
+            var columns = this.mainPanel.Width / (int)_width;
+            var rows = this.mainPanel.Height / (int)_height;
         }
 
         private Color ColorFromRgb(long rgb)
@@ -263,14 +275,10 @@ namespace NeovimDemo
 
         private void glControl_Load(object sender, EventArgs e)
         {
-            _font = new FontGroup(glControl.Font);
-            _font.Color = _fgColor;
+            InitialDimension();
 
-            _width = _font.MonoSpaceWidth;
-            _height = _font.LineSpacing;
             glControl.Width = Convert.ToInt32(_width * _columns);
             glControl.Height = Convert.ToInt32(_height * _rows);
-
             _cursor = new RectangleF(0, 0, _width, _height);
 
             _backBuffer = new FrameBuffer(glControl.Width, glControl.Height);
@@ -292,7 +300,6 @@ namespace NeovimDemo
         private void glControl_Paint(object sender, PaintEventArgs e)
         {
             _backBuffer.Texture.Bind();
-
             GL.Begin(PrimitiveType.Quads);
 
             // Backbuffer needs inverted TexCoords, origin of TexCoords is bottom-left corner
@@ -300,9 +307,7 @@ namespace NeovimDemo
             GL.TexCoord2(1, 1); GL.Vertex2(glControl.Width, 0);
             GL.TexCoord2(1, 0); GL.Vertex2(glControl.Width, glControl.Height);
             GL.TexCoord2(0, 0); GL.Vertex2(0, glControl.Height);
-
             GL.End();
-
             Texture2D.Unbind();
 
             // Invert cursor color depending on the background for now
@@ -317,26 +322,20 @@ namespace NeovimDemo
         private void DrawRectangle(RectangleF rect, Color color)
         {
             GL.Color3(color);
-
             GL.Begin(PrimitiveType.Quads);
-
             GL.Vertex2(rect.X, rect.Y);
             GL.Vertex2(rect.X + rect.Width, rect.Y);
             GL.Vertex2(rect.X + rect.Width, rect.Y + rect.Height);
             GL.Vertex2(rect.X, rect.Y + rect.Height);
-
             GL.End();
-
             GL.Color4(Color.White);
         }
 
         private void DrawTexturedRectangle(RectangleF rectSrc, RectangleF rectDst)
         {
             GL.Begin(PrimitiveType.Quads);
-
             var wScale = 1.0f / glControl.Width;
             var hScale = 1.0f / glControl.Height;
-
             var flippedRectSrc = new RectangleF(rectSrc.X, glControl.Height - rectSrc.Bottom, rectSrc.Width, rectSrc.Height);
 
             GL.TexCoord2(wScale * flippedRectSrc.X, hScale * (flippedRectSrc.Y + flippedRectSrc.Height)); GL.Vertex2(rectDst.X, rectDst.Y);
@@ -426,14 +425,12 @@ namespace NeovimDemo
             {
                 return true;
             }
-
             return shiftedSymbol.Contains(key);
 
         }
 
         private void ProcessCommandKey(string line)
         {
-
             var keyLookup = new Dictionary<string, int>()
                         {
                             { "c", 0x11 },//left control
@@ -466,7 +463,6 @@ namespace NeovimDemo
                     var unicodeInput = Input.Encode(commandCode, keyboardState);
                     _neovim.vim_input(unicodeInput);
                 }
-
             }
         }
 

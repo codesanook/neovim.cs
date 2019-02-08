@@ -32,8 +32,12 @@ namespace NeovimDemo
         {
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.loadScriptToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.mainPanel = new System.Windows.Forms.Panel();
+            this.gridViewCommand = new System.Windows.Forms.DataGridView();
             this.menuStrip1.SuspendLayout();
+            this.tableLayoutPanel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.gridViewCommand)).BeginInit();
             this.SuspendLayout();
             // 
             // menuStrip1
@@ -53,19 +57,43 @@ namespace NeovimDemo
             this.loadScriptToolStripMenuItem.Text = "load script";
             this.loadScriptToolStripMenuItem.Click += new System.EventHandler(this.LoadScriptToolStripMenuItem_Click);
             // 
+            // tableLayoutPanel1
+            // 
+            this.tableLayoutPanel1.ColumnCount = 2;
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 69.9095F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 30.0905F));
+            this.tableLayoutPanel1.Controls.Add(this.mainPanel, 0, 0);
+            this.tableLayoutPanel1.Controls.Add(this.gridViewCommand, 1, 0);
+            this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 24);
+            this.tableLayoutPanel1.Name = "tableLayoutPanel1";
+            this.tableLayoutPanel1.RowCount = 1;
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(884, 487);
+            this.tableLayoutPanel1.TabIndex = 1;
+            // 
             // mainPanel
             // 
             this.mainPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.mainPanel.Location = new System.Drawing.Point(0, 24);
+            this.mainPanel.Location = new System.Drawing.Point(3, 3);
             this.mainPanel.Name = "mainPanel";
-            this.mainPanel.Size = new System.Drawing.Size(884, 487);
-            this.mainPanel.TabIndex = 1;
+            this.mainPanel.Size = new System.Drawing.Size(611, 481);
+            this.mainPanel.TabIndex = 0;
+            // 
+            // gridViewCommand
+            // 
+            this.gridViewCommand.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.gridViewCommand.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.gridViewCommand.Location = new System.Drawing.Point(620, 3);
+            this.gridViewCommand.Name = "gridViewCommand";
+            this.gridViewCommand.Size = new System.Drawing.Size(261, 481);
+            this.gridViewCommand.TabIndex = 1;
             // 
             // MainWindow
             // 
             this.AutoSize = true;
             this.ClientSize = new System.Drawing.Size(884, 511);
-            this.Controls.Add(this.mainPanel);
+            this.Controls.Add(this.tableLayoutPanel1);
             this.Controls.Add(this.menuStrip1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MainMenuStrip = this.menuStrip1;
@@ -73,6 +101,8 @@ namespace NeovimDemo
             this.Name = "MainWindow";
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
+            this.tableLayoutPanel1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.gridViewCommand)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -84,7 +114,9 @@ namespace NeovimDemo
         private OpenTK.GLControl glControl;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem loadScriptToolStripMenuItem;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
         private System.Windows.Forms.Panel mainPanel;
+        private System.Windows.Forms.DataGridView gridViewCommand;
     }
 }
 

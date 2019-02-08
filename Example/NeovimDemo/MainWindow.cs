@@ -19,7 +19,6 @@ namespace NeovimDemo
     {
         private readonly SynchronizationContext _uiContext;
         private NeovimClient _neovim;
-
         private RectangleF _cursor;
         private RectangleF _scrollRegion;
         private int _columns = 55;
@@ -65,7 +64,6 @@ namespace NeovimDemo
                 GraphicsUnit.Point,
                 ((byte)(0))
             );
-
 
             this.glControl.Location = new Point(0, 0);
             this.glControl.Margin = new Padding(10);
@@ -272,7 +270,6 @@ namespace NeovimDemo
                 glControl.Invalidate();
         }
 
-
         private void glControl_Load(object sender, EventArgs e)
         {
             InitialDimension();
@@ -348,7 +345,7 @@ namespace NeovimDemo
 
         private void glControl_KeyDown(object sender, KeyEventArgs e)
         {
-            log.Debug($"keyCode in keydown {(int)e.KeyCode}");
+            log.Debug($"keyCode in key down {(int)e.KeyCode}");
             if (e.KeyCode == Keys.ShiftKey || e.KeyCode == Keys.Alt || e.KeyCode == Keys.ControlKey)
                 return;
 
@@ -360,63 +357,47 @@ namespace NeovimDemo
             e.Handled = true;
         }
 
-
-        private async Task HandleKeyInput(Stream inputStream)
+        private void ProcessCommands(string commands)
         {
-            var task = Task.Run(() =>
+            var keys = commands.ToArray();
+            var commandText = new StringBuilder();
+            var appendKey = false;
+            foreach (var key in keys)
             {
-                using (inputStream)
-                using (var streamReader = new StreamReader(inputStream))
+                if (key == '<')
                 {
-                    while (!streamReader.EndOfStream)
-                    {
-                        Thread.Sleep(2000);
-                        var line = streamReader.ReadLine();
-                        var keys = line.ToArray();
-                        var commandText = new StringBuilder();
-                        var appendKey = false;
-                        foreach (var key in keys)
-                        {
-
-                            if (key == '<')
-                            {
-                                appendKey = true;
-                            }
-
-                            if (key == '>')
-                            {
-                                commandText.Append(key);
-                                ProcessCommandKey(commandText.ToString());
-                                commandText = new StringBuilder();
-                                appendKey = false;
-                                continue;
-                            }
-
-                            if (appendKey)
-                            {
-                                commandText.Append(key);
-                                continue;
-                            }
-
-                            var keyboardState = new byte[256];
-                            if (IsCombinedWithShift(key))
-                            {
-                                const int shiftCode = 0XA0;
-                                keyboardState[shiftCode] = 0x81;
-
-                                const int dataLinkEscapeCode = 0x10;
-                                keyboardState[dataLinkEscapeCode] = 0x81;
-                            }
-
-                            var virtualCode = Input.GetVirtualCodeFromCharacter(key);
-                            var unicodeInput = Input.Encode(virtualCode, keyboardState);
-                            _neovim.vim_input(unicodeInput);
-                        }
-                    }
+                    appendKey = true;
                 }
-            });
 
-            await task;
+                if (key == '>')
+                {
+                    commandText.Append(key);
+                    ProcessCommandKey(commandText.ToString());
+                    commandText = new StringBuilder();
+                    appendKey = false;
+                    continue;
+                }
+
+                if (appendKey)
+                {
+                    commandText.Append(key);
+                    continue;
+                }
+
+                var keyboardState = new byte[256];
+                if (IsCombinedWithShift(key))
+                {
+                    const int shiftCode = 0XA0;
+                    keyboardState[shiftCode] = 0x81;
+
+                    const int dataLinkEscapeCode = 0x10;
+                    keyboardState[dataLinkEscapeCode] = 0x81;
+                }
+
+                var virtualCode = Input.GetVirtualCodeFromCharacter(key);
+                var unicodeInput = Input.Encode(virtualCode, keyboardState);
+                _neovim.vim_input(unicodeInput);
+            }
         }
 
         private static bool IsCombinedWithShift(char key)
@@ -426,16 +407,15 @@ namespace NeovimDemo
                 return true;
             }
             return shiftedSymbol.Contains(key);
-
         }
 
         private void ProcessCommandKey(string line)
         {
-            var keyLookup = new Dictionary<string, int>()
-                        {
-                            { "c", 0x11 },//left control
-                            { "cr" , 0xD}//cariage return
-                        };
+            var keyLookup = new Dictionary<string, int>
+                {
+                    { "c", 0x11 },//left control
+                    { "cr" , 0xD}//cariage return
+                };
 
             //?: not capture group
             var commandRegex = new Regex(@"<(?<command>\w+)(?:-(?<combinedKey>\w))?>", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -466,20 +446,59 @@ namespace NeovimDemo
             }
         }
 
-        private async void LoadScriptToolStripMenuItem_Click(object sender, EventArgs e)
+        private void MainWindow_Load(object sender, EventArgs e)
         {
-            Stream myStream = null;
-            var openFileDialog = new OpenFileDialog();
-            openFileDialog.InitialDirectory = "c:\\";
-            openFileDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
-            openFileDialog.FilterIndex = 2;
-            openFileDialog.RestoreDirectory = true;
+            var font = new Font("Verdana", 12, FontStyle.Regular);
+            gridViewCommand.DefaultCellStyle.Font = font;
+            gridViewCommand.RowHeadersVisible = true;
 
-            if (openFileDialog.ShowDialog() == DialogResult.OK)
-            {
-                myStream = openFileDialog.OpenFile();
-                await HandleKeyInput(myStream);
-            }
+            var rowTemplate = gridViewCommand.RowTemplate;
+            rowTemplate.Height = font.Height + 10;
+            rowTemplate.DefaultCellStyle.Padding = new Padding(10, 2, 10, 2);
+
+            var column = new DataGridViewTextBoxColumn { HeaderText = "Commands", Name = "commands" };
+            column.HeaderCell.Style.Font = font;
+            column.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            column.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            gridViewCommand.Columns.Add(column);
         }
+
+        private async void btnRunCommands_Click(object sender, EventArgs e)
+        {
+            //start with a normal mode 
+            string keys = Input.Encode((int)Keys.Escape);
+            _neovim.vim_input(keys);
+
+            btnRunCommands.Enabled = false;
+            foreach (DataGridViewCell cell in gridViewCommand.SelectedCells)
+            {
+                cell.Selected = false;
+            }
+            await Task.Delay(1000);
+
+            var defaultColor = gridViewCommand.DefaultCellStyle.BackColor;
+            foreach (DataGridViewRow row in gridViewCommand.Rows)
+            {
+                var value = GetCellValue(row);
+                if (string.IsNullOrWhiteSpace(value)) continue;
+
+                row.DefaultCellStyle.BackColor = ColorTranslator.FromHtml("#F00");
+                await Task.Delay(1000);
+                ProcessCommands(value);
+                await Task.Delay(2000);
+                row.DefaultCellStyle.BackColor = defaultColor;
+            }
+
+            btnRunCommands.Enabled = true;
+        }
+
+        private string GetCellValue(DataGridViewRow row)
+        {
+            const string columnName = "commands";
+            if (row?.Cells[columnName] == null) return null;
+            if (row.Cells[columnName].Value == null) return null;
+            return row.Cells[columnName].Value.ToString();
+        }
+
     }
 }

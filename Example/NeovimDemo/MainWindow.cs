@@ -32,14 +32,26 @@ namespace NeovimDemo
 
         private FrameBuffer _backBuffer;
         private FrameBuffer _pingPongBuffer;
-        private static readonly HashSet<char> shiftedSymbol = new HashSet<char>(new[]
+        private static readonly HashSet<char> shiftedSymbol = new HashSet<char>(
+            new[]
+            {
+                '(',
+                ')',
+                '%',
+                '{',
+                '}',
+                '$',
+                '^'
+            }
+        );
+
+        private static readonly IDictionary<string, int> specialKeysLookup = new Dictionary<string, int>()
         {
-            '(',
-            ')',
-            '%',
-            '{',
-            '}'
-        });
+            { "c", 0x11 },//left control
+            { "cr" , 0xD },//carriage return
+            { "esc", 0x1B },// escape
+            { "space", 0x20 }
+        };
 
         //https://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx
         private IDictionary<string, int> commandCode = new Dictionary<string, int>
@@ -349,7 +361,7 @@ namespace NeovimDemo
             if (e.KeyCode == Keys.ShiftKey || e.KeyCode == Keys.Alt || e.KeyCode == Keys.ControlKey)
                 return;
 
-            string keys = Input.Encode((int)e.KeyCode);
+            string keys = Input.ToUnicodeKey((int)e.KeyCode);
             log.Debug($"keys after encode {keys}");
             if (keys != null)
                 _neovim.vim_input(keys);
@@ -369,10 +381,13 @@ namespace NeovimDemo
                     appendKey = true;
                 }
 
+                // command break
                 if (key == '>')
                 {
                     commandText.Append(key);
                     ProcessCommandKey(commandText.ToString());
+
+                    //reset 
                     commandText = new StringBuilder();
                     appendKey = false;
                     continue;
@@ -411,19 +426,17 @@ namespace NeovimDemo
 
         private void ProcessCommandKey(string line)
         {
-            var keyLookup = new Dictionary<string, int>
-                {
-                    { "c", 0x11 },//left control
-                    { "cr" , 0xD}//cariage return
-                };
+            //?: means not capture group
+            var commandRegex = new Regex(
+                @"<(?<command>\w+)(?:-(?<combinedKey>\w))?>",
+                RegexOptions.Compiled | RegexOptions.IgnoreCase
+            );
 
-            //?: not capture group
-            var commandRegex = new Regex(@"<(?<command>\w+)(?:-(?<combinedKey>\w))?>", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             var match = commandRegex.Match(line);
             if (match.Success)
             {
                 var command = match.Groups["command"].Value;
-                var commandCode = keyLookup[command];
+                var commandCode = specialKeysLookup[command];
                 var combindedKeyValue = match.Groups["combinedKey"].Value;
 
                 if (!string.IsNullOrEmpty(combindedKeyValue))
@@ -466,7 +479,7 @@ namespace NeovimDemo
         private async void btnRunCommands_Click(object sender, EventArgs e)
         {
             //start with a normal mode 
-            string keys = Input.Encode((int)Keys.Escape);
+            string keys = Input.ToUnicodeKey((int)Keys.Escape);
             _neovim.vim_input(keys);
 
             btnRunCommands.Enabled = false;

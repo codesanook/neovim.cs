@@ -138,12 +138,12 @@ namespace Neovim
             return KeyToUnicode(key);
         }
 
-        public static string Encode(int key)
+        public static string ToUnicodeKey(int key)
         {
             log.Debug($"encode key value {key}");
             var unicodeKey = KeyToUnicode(KeyInterop.KeyFromVirtualKey(key));
 
-            log.Debug($"unicode key value {unicodeKey}");
+            log.Debug($"Unicode key value {unicodeKey}");
             return unicodeKey;
         }
 

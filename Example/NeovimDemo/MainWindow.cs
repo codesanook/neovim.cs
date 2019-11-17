@@ -161,7 +161,8 @@ namespace NeovimDemo
                                 var str = entry.Key.AsString(Encoding.Default);
                                 if (str == "foreground")
                                     _font.Color = ColorFromRgb(entry.Value.AsInteger());
-                                else if (str == "background") { }
+                                else if (str == "background") {
+                                }
                                 else if (str == "bold")
                                     if (entry.Value.AsBoolean())
                                         _font.FontStyle |= FontStyle.Bold;

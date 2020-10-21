@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -94,12 +93,13 @@ namespace NeovimDemo
             this.ResumeLayout(false);
             _uiContext = SynchronizationContext.Current;
 
-            //where to put vimrc ~\AppData\Local\nvim\init.vim
-            //install neovim from Chocolatey
+            // Where to put vimrc ~\AppData\Local\nvim\init.vim
+            // Install neovim from Chocolatey
             var neoVimPath = @"C:\tools\neovim\Neovim\bin\nvim.exe";
             _neovim = new NeovimClient(neoVimPath);
+
             // Event is asynchronous so we need to handle the redraw event in the UI thread
-            _neovim.Redraw += (o, args) => _uiContext.Post(x => NeovimOnRedraw(o, args), null);
+            _neovim.Redraw += (obj, args) => _uiContext.Post(x => NeovimOnRedraw(obj, args), null);
             _neovim.ui_attach(_columns, _rows, true);
         }
 
@@ -513,6 +513,6 @@ namespace NeovimDemo
             if (row.Cells[columnName].Value == null) return null;
             return row.Cells[columnName].Value.ToString();
         }
-
     }
 }
+

@@ -16,116 +16,111 @@ namespace NeovimDemo
 {
     public partial class MainWindow : Form
     {
-        private readonly SynchronizationContext _uiContext;
-        private NeovimClient _neovim;
-        private RectangleF _cursor;
-        private RectangleF _scrollRegion;
-        private int _columns = 55;
-        private int _rows = 24;
-        private float _width;
-        private float _height;
-        private FontGroup _font;
+        private readonly SynchronizationContext uiContext;
+        private readonly NeovimClient neovim;
+        private RectangleF cursor;
+        private RectangleF scrollRegion;
+        private readonly int columns = 55;
+        private readonly int rows = 24;
+        private float width;
+        private float height;
+        private FontGroup font;
 
-        private Color _fgColor = Color.White;
-        private Color _bgColor = Color.DarkSlateGray;
+        private readonly Color fgColor = Color.White;
+        private Color bgColor = Color.DarkSlateGray;
 
-        private FrameBuffer _backBuffer;
-        private FrameBuffer _pingPongBuffer;
-        private static readonly HashSet<char> shiftedSymbol = new HashSet<char>(
-            new[]
-            {
-                '(',
-                ')',
-                '%',
-                '{',
-                '}',
-                '$',
-                '^'
-            }
-        );
+        private FrameBuffer backBuffer;
+        private FrameBuffer pingPongBuffer;
+        private static readonly HashSet<char> shiftedSymbol =
+            new HashSet<char>(new[] { '(', ')', '%', '{', '}', '$', '^' });
 
         private static readonly IDictionary<string, int> specialKeysLookup = new Dictionary<string, int>()
         {
-            { "c", 0x11 },//left control
-            { "cr" , 0xD },//carriage return
-            { "esc", 0x1B },// escape
+            { "c", 0x11 }, // left control
+            { "cr" , 0xD }, // carriage return
+            { "esc", 0x1B }, // escape
             { "space", 0x20 }
         };
 
-        //https://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx
-        private IDictionary<string, int> commandCode = new Dictionary<string, int>
+        // https://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx
+        private readonly IDictionary<string, int> commandCodes = new Dictionary<string, int>
         {
             { "c", 0x11}
         };
 
         private static readonly ILog log = LogManager.GetLogger(nameof(MainWindow));
 
+        // Where to put vimrc ~/AppData/Local/nvim/init.vim
+        // Install neovim from Chocolatey
+        private static string neoVimPath = "C:/tools/neovim/Neovim/bin/nvim.exe";
+
         public MainWindow()
         {
-            log.Debug("main windows");
+            log.Debug("Enter a constructor");
+            Text = "Codesanook Vim Animation";
+
             InitializeComponent();
-            this.SuspendLayout();
+            SuspendLayout();
 
             // glControl
-            this.glControl = new GLControl();
-            this.glControl.Font = new Font(
-                "Consolas",
-                15F,
-                FontStyle.Regular,
-                GraphicsUnit.Point,
-                ((byte)(0))
-            );
+            glControl = new GLControl
+            {
+                Font = new Font(
+                    "Consolas",
+                    15F,
+                    FontStyle.Regular,
+                    GraphicsUnit.Point,
+                    0
+                ),
 
-            this.glControl.Location = new Point(0, 0);
-            this.glControl.Margin = new Padding(10);
-            this.glControl.Name = "glControl";
-            this.glControl.TabIndex = 0;
-            this.glControl.VSync = false;
-            this.glControl.Dock = DockStyle.Fill;
+                Location = new Point(0, 0),
+                Margin = new Padding(10),
+                Name = "glControl",
+                TabIndex = 0,
+                VSync = false,
+                Dock = DockStyle.Fill
+            };
 
-            this.glControl.Load += new EventHandler(this.glControl_Load);
-            this.glControl.Paint += new PaintEventHandler(this.glControl_Paint);
-            this.glControl.KeyDown += new KeyEventHandler(this.glControl_KeyDown);
+            glControl.Load += new EventHandler(glControl_Load);
+            glControl.Paint += new PaintEventHandler(glControl_Paint);
+            glControl.KeyDown += new KeyEventHandler(glControl_KeyDown);
 
-            this.mainPanel.Controls.Add(this.glControl);
-            this.Name = "MainWindow";
-            this.Text = "Neovim";
-            this.ResumeLayout(false);
-            _uiContext = SynchronizationContext.Current;
+            mainPanel.Controls.Add(glControl);
+            Name = "MainWindow";
+            ResumeLayout(false);
+            uiContext = SynchronizationContext.Current;
 
-            // Where to put vimrc ~\AppData\Local\nvim\init.vim
-            // Install neovim from Chocolatey
-            var neoVimPath = @"C:\tools\neovim\Neovim\bin\nvim.exe";
-            _neovim = new NeovimClient(neoVimPath);
+            neovim = new NeovimClient(neoVimPath);
 
             // Event is asynchronous so we need to handle the redraw event in the UI thread
-            _neovim.Redraw += (obj, args) => _uiContext.Post(x => NeovimOnRedraw(obj, args), null);
-            _neovim.ui_attach(_columns, _rows, true);
+            neovim.Redraw += (obj, args) => uiContext.Post(x => NeovimOnRedraw(obj, args), null);
+            neovim.ui_attach(columns, rows, true);
         }
 
         private void InitialDimension()
         {
-            _font = new FontGroup(glControl.Font);
-            _font.Color = _fgColor;
-            _width = _font.MonoSpaceWidth;
-            _height = _font.LineSpacing;
-            var columns = this.mainPanel.Width / (int)_width;
-            var rows = this.mainPanel.Height / (int)_height;
+            font = new FontGroup(glControl.Font)
+            {
+                Color = fgColor
+            };
+            width = font.MonoSpaceWidth;
+            height = font.LineSpacing;
+            var columns = mainPanel.Width / (int)width;
+            var rows = mainPanel.Height / (int)height;
         }
 
         private Color ColorFromRgb(long rgb)
         {
-            byte r = (byte)(rgb >> 16);
-            byte g = (byte)(rgb >> 8);
-            byte b = (byte)(rgb >> 0);
+            var r = (byte)(rgb >> 16);
+            var g = (byte)(rgb >> 8);
+            var b = (byte)(rgb >> 0);
             return Color.FromArgb(r, g, b);
         }
 
         private void NeovimOnRedraw(object sender, NeovimRedrawEventArgs e)
         {
             bool shouldInvalidate = false;
-
-            _backBuffer.Bind();
+            backBuffer.Bind();
             foreach (var method in e.Methods)
             {
                 switch (method.Method)
@@ -138,17 +133,17 @@ namespace NeovimDemo
                     case RedrawMethodType.Resize:
                         var columns = method.Params[0][1].AsInteger();
                         var rows = method.Params[0][0].AsInteger();
-                        if (rows == _rows && columns == _columns) return;
+                        if (rows == this.rows && columns == this.columns) return;
 
                         break;
 
                     case RedrawMethodType.UpdateForeground:
-                        _font.Color = ColorFromRgb(method.Params[0][0].AsInteger());
+                        font.Color = ColorFromRgb(method.Params[0][0].AsInteger());
                         break;
 
                     case RedrawMethodType.UpdateBackground:
-                        _bgColor = ColorFromRgb(method.Params[0][0].AsInteger());
-                        GL.ClearColor(_bgColor);
+                        bgColor = ColorFromRgb(method.Params[0][0].AsInteger());
+                        GL.ClearColor(bgColor);
                         break;
 
                     case RedrawMethodType.HighlightSet:
@@ -160,24 +155,25 @@ namespace NeovimDemo
                             {
                                 var str = entry.Key.AsString(Encoding.Default);
                                 if (str == "foreground")
-                                    _font.Color = ColorFromRgb(entry.Value.AsInteger());
-                                else if (str == "background") {
+                                    font.Color = ColorFromRgb(entry.Value.AsInteger());
+                                else if (str == "background")
+                                {
                                 }
                                 else if (str == "bold")
                                     if (entry.Value.AsBoolean())
-                                        _font.FontStyle |= FontStyle.Bold;
-                                    else _font.FontStyle &= ~FontStyle.Bold;
+                                        font.FontStyle |= FontStyle.Bold;
+                                    else font.FontStyle &= ~FontStyle.Bold;
                                 else if (str == "italic")
                                     if (entry.Value.AsBoolean())
-                                        _font.FontStyle |= FontStyle.Italic;
-                                    else _font.FontStyle &= FontStyle.Italic;
+                                        font.FontStyle |= FontStyle.Italic;
+                                    else font.FontStyle &= FontStyle.Italic;
                             }
                         }
                         break;
 
                     case RedrawMethodType.EolClear:
                         shouldInvalidate = true;
-                        DrawRectangle(new RectangleF(_cursor.X, _cursor.Y, _columns * _width - _cursor.X, _height), _bgColor);
+                        DrawRectangle(new RectangleF(cursor.X, cursor.Y, this.columns * this.width - cursor.X, this.height), bgColor);
                         break;
 
                     case RedrawMethodType.SetTitle:
@@ -191,27 +187,27 @@ namespace NeovimDemo
                             bytes.AddRange(arg[0].AsBinary());
 
                         var text = Encoding.Default.GetString(bytes.ToArray());
-                        var tSize = _font.Measure(text);
+                        var tSize = font.Measure(text);
 
-                        DrawRectangle(new RectangleF(_cursor.Location, tSize), _bgColor);
+                        DrawRectangle(new RectangleF(cursor.Location, tSize), bgColor);
 
                         GL.Enable(EnableCap.Blend);
-                        _font.Print(text, new Vector2(_cursor.X, _cursor.Y));
+                        font.Print(text, new Vector2(cursor.X, cursor.Y));
                         GL.Disable(EnableCap.Blend);
                         GL.Color4(Color.White);
 
-                        _cursor.X += tSize.Width;
-                        if (_cursor.X >= _columns * _width) // Don't know if this is needed
+                        cursor.X += tSize.Width;
+                        if (cursor.X >= this.columns * this.width) // Don't know if this is needed
                         {
-                            _cursor.X = 0;
-                            _cursor.Y += _height;
+                            cursor.X = 0;
+                            cursor.Y += this.height;
                         }
                         break;
 
                     case RedrawMethodType.CursorGoto:
                         shouldInvalidate = true;
-                        _cursor.Y = method.Params[0][0].AsInteger() * _height;
-                        _cursor.X = method.Params[0][1].AsInteger() * _width;
+                        cursor.Y = method.Params[0][0].AsInteger() * this.height;
+                        cursor.X = method.Params[0][1].AsInteger() * this.width;
                         break;
 
                     case RedrawMethodType.Scroll:
@@ -226,55 +222,55 @@ namespace NeovimDemo
                         // Scroll up
                         if (count >= 1)
                         {
-                            srcRect = new RectangleF(_scrollRegion.X, _scrollRegion.Y + _height, _scrollRegion.Width,
-                                _scrollRegion.Height - _height);
-                            dstRect = new RectangleF(_scrollRegion.X, _scrollRegion.Y, _scrollRegion.Width,
-                                _scrollRegion.Height - _height);
-                            clearRect = new RectangleF(_scrollRegion.X, _scrollRegion.Y + _scrollRegion.Height - _height,
-                                _scrollRegion.Width, _height + 1);
+                            srcRect = new RectangleF(scrollRegion.X, scrollRegion.Y + this.height, scrollRegion.Width,
+                                scrollRegion.Height - this.height);
+                            dstRect = new RectangleF(scrollRegion.X, scrollRegion.Y, scrollRegion.Width,
+                                scrollRegion.Height - this.height);
+                            clearRect = new RectangleF(scrollRegion.X, scrollRegion.Y + scrollRegion.Height - this.height,
+                                scrollRegion.Width, this.height + 1);
                         }
                         // Scroll down
                         else if (count <= -1)
                         {
-                            srcRect = new RectangleF(_scrollRegion.X, _scrollRegion.Y, _scrollRegion.Width,
-                                _scrollRegion.Height - _height);
-                            dstRect = new RectangleF(_scrollRegion.X, _scrollRegion.Y + _height, _scrollRegion.Width,
-                                _scrollRegion.Height - _height);
-                            clearRect = new RectangleF(_scrollRegion.X, _scrollRegion.Y, _scrollRegion.Width,
-                                _height + 1);
+                            srcRect = new RectangleF(scrollRegion.X, scrollRegion.Y, scrollRegion.Width,
+                                scrollRegion.Height - this.height);
+                            dstRect = new RectangleF(scrollRegion.X, scrollRegion.Y + this.height, scrollRegion.Width,
+                                scrollRegion.Height - this.height);
+                            clearRect = new RectangleF(scrollRegion.X, scrollRegion.Y, scrollRegion.Width,
+                                this.height + 1);
                         }
 
-                        _pingPongBuffer.Bind();
-                        _backBuffer.Texture.Bind();
+                        pingPongBuffer.Bind();
+                        backBuffer.Texture.Bind();
 
                         DrawTexturedRectangle(srcRect, dstRect);
 
-                        _backBuffer.Bind();
-                        _pingPongBuffer.Texture.Bind();
+                        backBuffer.Bind();
+                        pingPongBuffer.Texture.Bind();
 
                         DrawTexturedRectangle(dstRect, dstRect);
 
                         Texture2D.Unbind();
 
-                        DrawRectangle(clearRect, _bgColor);
+                        DrawRectangle(clearRect, bgColor);
                         break;
 
                     case RedrawMethodType.SetScrollRegion:
-                        var x = method.Params[0][2].AsInteger() * _width;
-                        var y = method.Params[0][0].AsInteger() * _height;
-                        var width = (method.Params[0][3].AsInteger() + 1) * _width;
-                        var height = (method.Params[0][1].AsInteger() + 1) * _height;
+                        var x = method.Params[0][2].AsInteger() * this.width;
+                        var y = method.Params[0][0].AsInteger() * this.height;
+                        var width = (method.Params[0][3].AsInteger() + 1) * this.width;
+                        var height = (method.Params[0][1].AsInteger() + 1) * this.height;
 
-                        _scrollRegion = new RectangleF(x, y, width, height);
+                        scrollRegion = new RectangleF(x, y, width, height);
                         break;
 
                     case RedrawMethodType.ModeChange:
                         shouldInvalidate = true;
                         var mode = method.Params[0][0].AsString(Encoding.Default);
                         if (mode == "insert")
-                            _cursor.Width = _width / 4;
+                            cursor.Width = this.width / 4;
                         else if (mode == "normal")
-                            _cursor.Width = _width;
+                            cursor.Width = this.width;
                         break;
                 }
             }
@@ -287,12 +283,12 @@ namespace NeovimDemo
         {
             InitialDimension();
 
-            glControl.Width = Convert.ToInt32(_width * _columns);
-            glControl.Height = Convert.ToInt32(_height * _rows);
-            _cursor = new RectangleF(0, 0, _width, _height);
+            glControl.Width = Convert.ToInt32(width * columns);
+            glControl.Height = Convert.ToInt32(height * rows);
+            cursor = new RectangleF(0, 0, width, height);
 
-            _backBuffer = new FrameBuffer(glControl.Width, glControl.Height);
-            _pingPongBuffer = new FrameBuffer(glControl.Width, glControl.Height);
+            backBuffer = new FrameBuffer(glControl.Width, glControl.Height);
+            pingPongBuffer = new FrameBuffer(glControl.Width, glControl.Height);
 
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
@@ -304,12 +300,12 @@ namespace NeovimDemo
 
             GL.Disable(EnableCap.DepthTest);
             GL.Disable(EnableCap.Lighting);
-            GL.ClearColor(_bgColor);
+            GL.ClearColor(bgColor);
         }
 
         private void glControl_Paint(object sender, PaintEventArgs e)
         {
-            _backBuffer.Texture.Bind();
+            backBuffer.Texture.Bind();
             GL.Begin(PrimitiveType.Quads);
 
             // Backbuffer needs inverted TexCoords, origin of TexCoords is bottom-left corner
@@ -323,7 +319,7 @@ namespace NeovimDemo
             // Invert cursor color depending on the background for now
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactorSrc.OneMinusDstColor, BlendingFactorDest.Zero);
-            DrawRectangle(_cursor, Color.White);
+            DrawRectangle(cursor, Color.White);
             GL.Disable(EnableCap.Blend);
 
             glControl.SwapBuffers();
@@ -365,7 +361,7 @@ namespace NeovimDemo
             string keys = Input.ToUnicodeKey((int)e.KeyCode);
             log.Debug($"keys after encode {keys}");
             if (keys != null)
-                _neovim.vim_input(keys);
+                neovim.vim_input(keys);
 
             e.Handled = true;
         }
@@ -412,7 +408,7 @@ namespace NeovimDemo
 
                 var virtualCode = Input.GetVirtualCodeFromCharacter(key);
                 var unicodeInput = Input.Encode(virtualCode, keyboardState);
-                _neovim.vim_input(unicodeInput);
+                neovim.vim_input(unicodeInput);
             }
         }
 
@@ -449,13 +445,13 @@ namespace NeovimDemo
                     keyboardState[commandCode] = 0x81;
 
                     var unicodeInput = Input.Encode(combinedKeyCode, keyboardState);
-                    _neovim.vim_input(unicodeInput);
+                    neovim.vim_input(unicodeInput);
                 }
                 else
                 {
                     var keyboardState = new byte[256];
                     var unicodeInput = Input.Encode(commandCode, keyboardState);
-                    _neovim.vim_input(unicodeInput);
+                    neovim.vim_input(unicodeInput);
                 }
             }
         }
@@ -470,7 +466,11 @@ namespace NeovimDemo
             rowTemplate.Height = font.Height + 10;
             rowTemplate.DefaultCellStyle.Padding = new Padding(10, 2, 10, 2);
 
-            var column = new DataGridViewTextBoxColumn { HeaderText = "Commands", Name = "commands" };
+            var column = new DataGridViewTextBoxColumn
+            {
+                HeaderText = "Commands",
+                Name = "commands"
+            };
             column.HeaderCell.Style.Font = font;
             column.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
             column.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
@@ -481,7 +481,7 @@ namespace NeovimDemo
         {
             //start with a normal mode 
             string keys = Input.ToUnicodeKey((int)Keys.Escape);
-            _neovim.vim_input(keys);
+            neovim.vim_input(keys);
 
             btnRunCommands.Enabled = false;
             foreach (DataGridViewCell cell in gridViewCommand.SelectedCells)

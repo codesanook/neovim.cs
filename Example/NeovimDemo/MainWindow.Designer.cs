@@ -55,7 +55,7 @@ namespace NeovimDemo
             this.tableLayoutPanel1.RowCount = 2;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 89.32238F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 10.67762F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(841, 498);
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(784, 437);
             this.tableLayoutPanel1.TabIndex = 1;
             // 
             // mainPanel
@@ -64,7 +64,7 @@ namespace NeovimDemo
             this.mainPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.mainPanel.Location = new System.Drawing.Point(253, 3);
             this.mainPanel.Name = "mainPanel";
-            this.mainPanel.Size = new System.Drawing.Size(585, 438);
+            this.mainPanel.Size = new System.Drawing.Size(585, 384);
             this.mainPanel.TabIndex = 0;
             // 
             // gridViewCommand
@@ -73,15 +73,15 @@ namespace NeovimDemo
             this.gridViewCommand.Dock = System.Windows.Forms.DockStyle.Fill;
             this.gridViewCommand.Location = new System.Drawing.Point(3, 3);
             this.gridViewCommand.Name = "gridViewCommand";
-            this.gridViewCommand.Size = new System.Drawing.Size(244, 438);
+            this.gridViewCommand.Size = new System.Drawing.Size(244, 384);
             this.gridViewCommand.TabIndex = 1;
             // 
             // btnRunCommands
             // 
             this.btnRunCommands.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.btnRunCommands.Location = new System.Drawing.Point(3, 447);
+            this.btnRunCommands.Location = new System.Drawing.Point(3, 393);
             this.btnRunCommands.Name = "btnRunCommands";
-            this.btnRunCommands.Size = new System.Drawing.Size(244, 48);
+            this.btnRunCommands.Size = new System.Drawing.Size(244, 41);
             this.btnRunCommands.TabIndex = 2;
             this.btnRunCommands.Text = "Run Commands";
             this.btnRunCommands.UseVisualStyleBackColor = true;
@@ -99,14 +99,14 @@ namespace NeovimDemo
             this.loadScriptToolStripMenuItem});
             this.mainMenu.Location = new System.Drawing.Point(0, 0);
             this.mainMenu.Name = "mainMenu";
-            this.mainMenu.Size = new System.Drawing.Size(841, 24);
+            this.mainMenu.Size = new System.Drawing.Size(784, 24);
             this.mainMenu.TabIndex = 0;
             this.mainMenu.Text = "mainMenu";
             // 
             // MainWindow
             // 
             this.AutoSize = true;
-            this.ClientSize = new System.Drawing.Size(841, 522);
+            this.ClientSize = new System.Drawing.Size(784, 461);
             this.Controls.Add(this.tableLayoutPanel1);
             this.Controls.Add(this.mainMenu);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
